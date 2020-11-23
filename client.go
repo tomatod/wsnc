@@ -258,7 +258,7 @@ func wscCmdHelp(conn *websocket.Conn, arg string) (bool, error) {
    echo, e  Send message to server. Message type depend on type command parameter (default: text)
    ping, p  Send ping message to server.
    quit, q  Send close message (code: 1000) to server and finish wsnc.
-   type, t  Change message type (text|binary|ping|close).
+   type, t  Change echo message type (text|binary|ping|close).
    help, h  Display command help.`)
 	return true, nil
 }
