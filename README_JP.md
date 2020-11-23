@@ -65,7 +65,7 @@ COMMANDS:
 >> t close
 >> e 1011
 ```
-※ close code は以下参照
+※ close code は以下参照   
 https://tools.ietf.org/html/rfc6455#section-7.4.1
 
 # オプション
