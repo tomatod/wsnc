@@ -63,7 +63,7 @@ func init() {
 		Name:    "header",
 		Aliases: []string{"H"},
 		Value:   nil,
-		Usage:   "In client mode, specify any HTTP headers. If you specify multiple headers, please use multiple \"-h\". Example: -h \"hoo:var\" -h \"bon:bar\".",
+		Usage:   "In client mode, specify any HTTP headers. If you specify multiple headers, please use multiple \"-H\". Example: -H \"hoo:var\" -H \"bon:bar\".",
 	}
 
 	logTimeFlag := &cli.BoolFlag{
