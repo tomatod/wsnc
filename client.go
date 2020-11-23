@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/gorilla/websocket"
+	"net/http"
 	"os"
 	"strconv"
 	"strings"
@@ -16,8 +17,16 @@ var dialer = &websocket.Dialer{}
 
 // Entry point of client mode.
 func startClient() error {
+	var headers http.Header = nil
+	var err error
+	if appConfig.Headers != nil {
+		headers, err = makeHttpHeader(appConfig.Headers)
+		if err != nil {
+			return err
+		}
+	}
 	// Connect to websocket server.
-	conn, _, err := dialer.Dial(appConfig.Url, nil)
+	conn, _, err := dialer.Dial(appConfig.Url, headers)
 	if err != nil {
 		return err
 	}

@@ -13,6 +13,7 @@ type Config struct {
 	Url         string
 	Message     string
 	Path        string
+	Headers     []string
 	IsServer    bool
 	IsOneShot   bool
 	IsTime      bool
@@ -33,6 +34,7 @@ func setAppConfig(c *cli.Context) error {
 		IsLevel:     c.Bool("loglevel"),
 		IsDebug:     c.Bool("debug"),
 		IsBroadcast: c.Bool("broadcast"),
+		Headers:     c.StringSlice("header"),
 	}
 
 	if appConfig.IsServer {

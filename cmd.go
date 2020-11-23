@@ -59,6 +59,13 @@ func init() {
 		Usage:   "Run client with one shot  mode. This option is ignored in server mode.",
 	}
 
+	headerFlag := &cli.StringSliceFlag{
+		Name:    "header",
+		Aliases: []string{"H"},
+		Value:   nil,
+		Usage:   "In client mode, specify any HTTP headers. If you specify multiple headers, please use multiple \"-h\". Example: -h \"hoo:var\" -h \"bon:bar\".",
+	}
+
 	logTimeFlag := &cli.BoolFlag{
 		Name:    "logtime",
 		Aliases: []string{"t"},
@@ -97,6 +104,7 @@ func init() {
 		logTimeFlag,
 		logLevelFlag,
 		debugFlag,
+		headerFlag,
 	}
 }
 
