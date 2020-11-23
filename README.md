@@ -67,6 +67,8 @@ COMMANDS:
 >> t close
 >> e 1011
 ```
+Note: Close code is the following
+https://tools.ietf.org/html/rfc6455#section-7.4.1
 
 
 # Options
