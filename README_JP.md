@@ -36,6 +36,38 @@ wsnc -s -p 80 -u /bar/
 wsnc -s -t -l
 ```
 
+# クライアントモードのコマンド
+```
+# 基本的にはヘルプコマンドを実行して確認してください。
+>> help
+COMMANDS:
+   echo, e  Send message to server. Message type depend on type command parameter (default: text)
+   ping, p  Send ping message to server.
+   quit, q  Send close message (code: 1000) to server and finish wsnc.
+   type, t  Change echo message type (text|binary|ping|close).
+   help, h  Display command help.
+   
+# 例
+## "hoge" という text メッセージを送信します。
+>> e "hoge"
+
+## "bar" という binary メッセージを送信します。
+>> t binary
+>> e bar
+
+## close メッセージを送信ししてコマンドを終了します。
+>> q
+
+## "ping" という文字列で、ping メッセージを送信します。
+>> p "ping"
+
+## 特定の close code (example is 1011) を close メッセージで送信して、コマンドを終了します。
+>> t close
+>> e 1011
+```
+※ close code は以下参照
+https://tools.ietf.org/html/rfc6455#section-7.4.1
+
 # オプション
 ```
 --server, -s
