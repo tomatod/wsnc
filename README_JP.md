@@ -2,6 +2,8 @@
 # wsnc
 wsnc は Go 言語で開発されたシンプルな WebSocket 用の CLI ツールです。wsnc 単体でクライアントとサーバーの両方に使うことができます。簡単に言うと netcat というコマンドの WebSocket 版です。
 
+![Gif](https://raw.githubusercontent.com/wiki/tomatod/wsnc/demo.gif)
+
 # 開始方法
 Go の実行環境が構築済みの場合   
 ``` sh
