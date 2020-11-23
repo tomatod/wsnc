@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/gorilla/websocket"
 	"os"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -201,6 +202,18 @@ func wscCmdEcho(conn *websocket.Conn, arg string) (bool, error) {
 	if strings.Trim(arg, " ") == "" {
 		return true, errors.New("Message is empty.")
 	}
+	if clientNowMessageType == websocket.CloseMessage {
+		code, err := strconv.Atoi(arg)
+		if err != nil {
+			e := conn.WriteMessage(clientNowMessageType, []byte(arg))
+			return false, e
+		}
+		codeUint16 := uint16(code)
+		bytes := []byte{byte(codeUint16 >> 8), byte(codeUint16)}
+		err = conn.WriteMessage(clientNowMessageType, bytes)
+		clientController.connectionClose()
+		return false, err
+	}
 	clientController.startAwaitMessage()
 	err := conn.WriteMessage(clientNowMessageType, []byte(arg))
 	return true, err
@@ -217,7 +230,8 @@ func wscCmdPing(conn *websocket.Conn, arg string) (bool, error) {
 func wscCmdClose(conn *websocket.Conn, arg string) (bool, error) {
 	rdebugf("Client select closing connection.")
 	clientController.connectionClose()
-	err := conn.WriteMessage(websocket.CloseMessage, []byte(arg))
+	// send close code 1000
+	err := conn.WriteMessage(websocket.CloseMessage, []byte{0x03, 0xe8})
 	return false, err
 }
 
@@ -241,11 +255,11 @@ func wscCmdMessageType(conn *websocket.Conn, arg string) (bool, error) {
 // Help command
 func wscCmdHelp(conn *websocket.Conn, arg string) (bool, error) {
 	fmt.Println(`COMMANDS:
-   echo, e  Send message to server. Message type depend on type command parameter (default: text))
-   ping, p  Send ping message to server.)
-   quit, q  Send close message to server and finish wsnc.)
-   type, t  Change message type (text|binary|ping|close).)
-   help, h  Display command help.)`)
+   echo, e  Send message to server. Message type depend on type command parameter (default: text)
+   ping, p  Send ping message to server.
+   quit, q  Send close message (code: 1000) to server and finish wsnc.
+   type, t  Change message type (text|binary|ping|close).
+   help, h  Display command help.`)
 	return true, nil
 }
 
@@ -333,7 +347,7 @@ func (c *ClientController) setHandlers(conn *websocket.Conn, closeHdl func(int, 
 			err = closeHdl(code, recvMsg)
 		}
 		if !clientController.isAwaitMsg() {
-			msgFromSererf("< Server sent close message: %s  code: %d", recvMsg, code)
+			msgFromSererf("< Server sent close code: %d", recvMsg, code)
 		}
 		c.setRecvMsgFromServer(websocket.CloseMessage, recvMsg, code, err)
 		return err

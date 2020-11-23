@@ -60,7 +60,13 @@ func mainHandler(w http.ResponseWriter, r *http.Request) {
 			sendBroadcast(r.RemoteAddr, mt, string(recvMsg))
 			continue
 		}
-		if err := sendReplyMessage(conn, mt, string(recvMsg)); err != nil {
+		if appConfig.Message != "" {
+			if err = conn.WriteMessage(mt, []byte(appConfig.Message)); err != nil {
+				warnLogf(err.Error())
+				return
+			}
+		}
+		if err = conn.WriteMessage(mt, []byte(recvMsg)); err != nil {
 			warnLogf(err.Error())
 			return
 		}
@@ -77,15 +83,6 @@ func sendBroadcast(addr string, mt int, recvMsg string) {
 			warnLogf("Send to client(%s) is error: %s\n", key, err.Error())
 		}
 	}
-}
-
-// Send message depending on command "-m" option.
-// Message type is the same one of client.
-func sendReplyMessage(conn *websocket.Conn, mt int, recvMsg string) error {
-	if appConfig.Message != "" {
-		return conn.WriteMessage(mt, []byte(appConfig.Message))
-	}
-	return conn.WriteMessage(mt, []byte(recvMsg))
 }
 
 // Output log, when server start up.
@@ -114,12 +111,16 @@ func getReplyMessageType(req *http.Request, conn *websocket.Conn, messageType in
 func setServerHandlers(conn *websocket.Conn, req *http.Request) {
 	conn.SetPingHandler(func(recvMsg string) error {
 		infoLogf("Client(%s): request ping message \"%s\".", req.RemoteAddr, recvMsg)
-		return sendReplyMessage(conn, websocket.PongMessage, recvMsg)
+		// reply same messsage from client.
+		return conn.WriteMessage(websocket.PongMessage, []byte(recvMsg))
 	})
 	conn.SetCloseHandler(func(code int, recvMsg string) error {
 		deleteConnectionFromClient(req.RemoteAddr)
 		infoLogf("Client(%s): request closing connection (code: %d). Message is \"%s\"", req.RemoteAddr, code, recvMsg)
-		return sendReplyMessage(conn, websocket.CloseMessage, recvMsg)
+		// reply same close code from client.
+		codeUint16 := uint16(code)
+		replyByte := []byte{byte(codeUint16 >> 8), byte(codeUint16)}
+		return conn.WriteMessage(websocket.CloseMessage, replyByte)
 	})
 }
 
