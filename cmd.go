@@ -137,7 +137,7 @@ EXAMPLE:
    // output time (-t) and loglevel (-l) in server usage.
    wsnc -s -t -l
 
-MANUAL: https://github.com/tomatod/wsnc/README.md
+HTML MANUAL: https://github.com/tomatod/wsnc/blob/master/README.md
 
 `, cli.AppHelpTemplate)
 }
