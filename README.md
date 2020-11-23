@@ -92,10 +92,13 @@ If you broadcast from server, specify this option. (default: false)
 Specify message sent by server in text or binary message or by one-shot mode client.
 
 --logtime, -t
-enable timestamp of server logs. (default: false)
+Enable timestamp of server logs. (default: false)
 
 --loglevel, -l
-enable log level of server logs. (default: false)
+Enable log level of server logs. (default: false)
+
+--header string, -H string   
+In client mode, specify any HTTP headers. If you specify multiple headers, please use multiple "-H". Example: -H "hoo:var" -H "bon:bar".
 
 --debug, -d
 Active additional debug logs. Now, not much different from when disabled (default: false)
