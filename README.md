@@ -4,6 +4,13 @@ wsnc is simple cli-tool made by go language for websocket. Using command option,
 # Manual for languages
 - [日本語のマニュアル](./README_JP.md)
 
+# Let's start
+``` sh
+$ go get github.com/tomatod/wsnc
+$ wsnc -h
+...
+```
+
 # Examples
 ```sh
 # show help
