@@ -12,7 +12,7 @@ $ wsnc -h
 ...
 ```
 
-If you want to get execution file, please download that from the following page.
+If you want to get execution file, please download that from the following page.   
 https://github.com/tomatod/wsnc/releases/tag/0.8.0
 
 # Examples
