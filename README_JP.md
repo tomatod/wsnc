@@ -4,8 +4,9 @@ wsnc は Go 言語で開発されたシンプルな WebSocket 用の CLI ツー�
 
 # 開始方法
 ``` sh
-go get github.com/tomatod/wsnc
-wsnc -h
+$ go get github.com/tomatod/wsnc
+$ wsnc -h
+...
 ```
 
 # 使用例
