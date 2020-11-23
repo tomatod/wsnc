@@ -1,5 +1,5 @@
 # wsnc
-wsnc is simple cli-tool made by go language for websocket. you can use wsnc as both client or server.
+wsnc is simple cli-tool made by go language for websocket. you can use wsnc as both client or server. So to speak, wsnc is the WebSocket version of netcat
 
 # Manual for languages
 - [日本語のマニュアル](./README_JP.md)
