@@ -38,6 +38,37 @@ wsnc -s -p 80 -u /bar/
 wsnc -s -t -l
 ```
 
+# Client mode commands
+```
+# Please run help command
+>> help
+COMMANDS:
+   echo, e  Send message to server. Message type depend on type command parameter (default: text)
+   ping, p  Send ping message to server.
+   quit, q  Send close message (code: 1000) to server and finish wsnc.
+   type, t  Change echo message type (text|binary|ping|close).
+   help, h  Display command help.
+   
+# example
+## send text message "hoge"
+>> e "hoge"
+
+## send binary message "bar"
+>> t binary
+>> e bar
+
+## send close message and quit
+>> q
+
+## send ping message "ping"
+>> p "ping"
+
+## send specify close code (example is 1011) and quit
+>> t close
+>> e 1011
+```
+
+
 # Options
 ```
 --server, -s
