@@ -5,11 +5,15 @@ wsnc is simple cli-tool made by go language for websocket. Using command option,
 - [日本語のマニュアル](./README_JP.md)
 
 # Let's start
+If you installed go environment.
 ``` sh
 $ go get github.com/tomatod/wsnc
 $ wsnc -h
 ...
 ```
+
+If you want to get execution file, please download that from the following page.
+https://github.com/tomatod/wsnc/releases/tag/0.8.0
 
 # Examples
 ```sh
