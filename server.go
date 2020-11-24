@@ -115,7 +115,7 @@ func closeServerConn(req *http.Request, conn *websocket.Conn) {
 	infoLogf("Connection closed from %s", req.RemoteAddr)
 }
 
-// Connection from client list.
+// Connection from client list and this is required to be thread safe.
 type ConnectionsFromClients struct {
 	m  map[string]*websocket.Conn
 	mu sync.RWMutex

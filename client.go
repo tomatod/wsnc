@@ -13,8 +13,12 @@ import (
 	"time"
 )
 
-var dialer = &websocket.Dialer{}
+var (
+	dialer      = &websocket.Dialer{}
+	clientClose = &ClientClose{}
+)
 
+// To check whether client connection is closed.
 type ClientClose struct {
 	mu  sync.RWMutex
 	Yes bool
@@ -31,8 +35,6 @@ func (c *ClientClose) check() bool {
 	defer c.mu.RUnlock()
 	return c.Yes
 }
-
-var clientClose = &ClientClose{}
 
 // Entry point of client mode.
 func startClient() error {
@@ -102,6 +104,7 @@ func clientWebSocketLoop(conn *websocket.Conn) error {
 	return nil
 }
 
+// Loop for recieving text or binary messages.
 func readMessageFromServer(conn *websocket.Conn) {
 	for {
 		mt, recvMsg, err := conn.ReadMessage()
@@ -123,7 +126,7 @@ func readMessageFromServer(conn *websocket.Conn) {
 	}
 }
 
-// hdls: 1. PingHandler 2. PongHandler
+// Set Handler for recieve control message (Ping/Pong/Close)
 func setClientHandlers(conn *websocket.Conn) {
 	conn.SetCloseHandler(func(code int, recvMsg string) error {
 		clientClose.close()
@@ -144,20 +147,6 @@ func setClientHandlers(conn *websocket.Conn) {
 	})
 }
 
-// Print prompt for wsnc client.
-func prompt() {
-	fmt.Print(">> ")
-}
-
-func msgFromServer(mtype int, msg string, code int) {
-	if code != 0 {
-		fmt.Printf("\r< Close Code %d\n", code)
-		return
-	}
-	mtypeStr := strMsgType[mtype]
-	fmt.Printf("\r< %s (%s)\n", msg, mtypeStr)
-}
-
 // If client is running in one-shot mode, this function is called.
 func clientOneShot(conn *websocket.Conn) error {
 	err := conn.WriteMessage(websocket.TextMessage, []byte(appConfig.Message))
@@ -165,6 +154,21 @@ func clientOneShot(conn *websocket.Conn) error {
 		return err
 	}
 	return conn.WriteMessage(websocket.CloseMessage, []byte{0x03, 0xe8})
+}
+
+// Print prompt for wsnc client.
+func prompt() {
+	fmt.Print(">> ")
+}
+
+// Print message from server.
+func msgFromServer(mtype int, msg string, code int) {
+	if code != 0 {
+		fmt.Printf("\r< Close Code %d\n", code)
+		return
+	}
+	mtypeStr := strMsgType[mtype]
+	fmt.Printf("\r< %s (%s)\n", msg, mtypeStr)
 }
 
 // When websocket connection loop is end, this function is always called.
@@ -178,6 +182,10 @@ func closeClientConn(conn *websocket.Conn) {
 	}
 }
 
+// Now messagetype for echo command.
+var clientNowMessageType = websocket.TextMessage
+
+// Client command map
 var wscCmds = map[string]func(*websocket.Conn, string) (bool, error){
 	// full name
 	"echo": wscCmdEcho,
@@ -194,9 +202,7 @@ var wscCmds = map[string]func(*websocket.Conn, string) (bool, error){
 	"h": wscCmdHelp,
 }
 
-var clientNowMessageType = websocket.TextMessage
-
-// Command for send text or binary message of websocket.
+// Command for send message.
 func wscCmdEcho(conn *websocket.Conn, arg string) (bool, error) {
 	if strings.Trim(arg, " ") == "" {
 		return true, errors.New("Message is empty.")
@@ -229,14 +235,6 @@ func wscCmdClose(conn *websocket.Conn, arg string) (bool, error) {
 	// send close code 1000
 	err := conn.WriteMessage(websocket.CloseMessage, []byte{0x03, 0xe8})
 	return false, err
-}
-
-var messageTypes = map[string]int{
-	"text":   websocket.TextMessage,
-	"binary": websocket.BinaryMessage,
-	"close":  websocket.CloseMessage,
-	"ping":   websocket.PingMessage,
-	"pong":   websocket.PongMessage,
 }
 
 // Command for set message type of websocket.

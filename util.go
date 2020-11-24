@@ -7,6 +7,14 @@ import (
 	"strings"
 )
 
+var messageTypes = map[string]int{
+	"text":   websocket.TextMessage,
+	"binary": websocket.BinaryMessage,
+	"close":  websocket.CloseMessage,
+	"ping":   websocket.PingMessage,
+	"pong":   websocket.PongMessage,
+}
+
 var strMsgType = map[int]string{
 	websocket.TextMessage:   "Text",
 	websocket.BinaryMessage: "Binary",
