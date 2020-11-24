@@ -48,7 +48,6 @@ func getOutputAfterExecCmd(t *testing.T, cmd string) ([]byte, []byte, error, err
 
 	// Start connection.
 	appConfig.Url = httpToWs(testServer.URL) + appConfig.Path
-	t.Log("Listen: " + appConfig.Url)
 	if err := startClient(); err != nil {
 		return nil, nil, err, err
 	}
@@ -96,7 +95,7 @@ func TestTextMsg(t *testing.T) {
 		return
 	}
 
-	expectStr := "< text"
+	expectStr := "< text (Text)"
 	if !strings.Contains(string(output), expectStr) {
 		t.Errorf("\"%s\" is not found. output is \"%s\"", expectStr, string(output))
 	}
@@ -117,7 +116,7 @@ func TestBinaryMsg(t *testing.T) {
 		return
 	}
 
-	expectStr := "< binary"
+	expectStr := "< binary (Binary)"
 	if !strings.Contains(string(output), expectStr) {
 		t.Errorf("\"%s\" is not found. output is \"%s\"", expectStr, string(output))
 	}
@@ -136,7 +135,7 @@ func TestPingMsg(t *testing.T) {
 		return
 	}
 
-	expectStr := "< Server replied pong message: test"
+	expectStr := "< test (Pong)"
 	if !strings.Contains(string(output), expectStr) {
 		t.Errorf("\"%s\" is not found. output is \"%s\"", expectStr, string(output))
 	}

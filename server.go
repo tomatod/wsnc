@@ -29,10 +29,10 @@ func mainHandler(w http.ResponseWriter, r *http.Request) {
 	// Upgrade http to websocket.
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		errLogf("Upgrade error. Message is \"%s\".", err.Error())
+		errLogf("Upgrade error : \"%s\".", err.Error())
 		return
 	}
-	infoLogf("Connected from client(%s)...", r.RemoteAddr)
+	infoLogf("Connected from %s ...", r.RemoteAddr)
 	defer closeServerConn(r, conn)
 	addConnectionFromClient(r.RemoteAddr, conn)
 	setServerHandlers(conn, r)
@@ -45,16 +45,17 @@ func mainHandler(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if err != nil {
-			warnLogf("Invalid message from client(%s). Error is \"%s\"", r.RemoteAddr, err.Error())
+			warnLogf("Invalid message from %s : \"%s\"", r.RemoteAddr, err.Error())
 			if mt == -1 {
 				deleteConnectionFromClient(r.RemoteAddr)
-				warnLogf("Connection from client(%s) may be closed.", r.RemoteAddr)
+				warnLogf("Connection may be closed from %s.", r.RemoteAddr)
 				return
 			}
 			continue
 		}
 
-		infoLogf("Client(%s): %s", r.RemoteAddr, string(recvMsg))
+		strMsgT, _ := strMsgType[mt]
+		infoLogf("%s > %s (%s)", r.RemoteAddr, string(recvMsg), strMsgT)
 
 		if appConfig.IsBroadcast {
 			sendBroadcast(r.RemoteAddr, mt, string(recvMsg))
@@ -78,45 +79,28 @@ func sendBroadcast(addr string, mt int, recvMsg string) {
 	connectionsFromClients.mu.RLock()
 	defer connectionsFromClients.mu.RUnlock()
 	for key, conn := range connectionsFromClients.m {
-		err := conn.WriteMessage(mt, []byte("\""+recvMsg+"\" by Client("+addr+")"))
+		err := conn.WriteMessage(mt, []byte(recvMsg))
 		if err != nil {
-			warnLogf("Send to client(%s) is error: %s\n", key, err.Error())
+			warnLogf("Send error to %s: \"%s\"\n", key, err.Error())
 		}
 	}
 }
 
 // Output log, when server start up.
 func outputServerInfo() {
-	var msg string = "repeat"
-	if appConfig.Message != "" {
-		msg = "\"" + appConfig.Message + "\""
-	}
-	infoLogf("Server start up => port:%s | path:%s | message:%s", appConfig.PortStr, appConfig.Path, msg)
-}
-
-func getReplyMessageType(req *http.Request, conn *websocket.Conn, messageType int, recvMsg []byte) int {
-	switch messageType {
-	case websocket.TextMessage:
-		infoLogf("Client(%s): %s", req.RemoteAddr, string(recvMsg))
-		return messageType
-	case websocket.BinaryMessage:
-		infoLogf("Client(%s): %s", req.RemoteAddr, string(recvMsg))
-		return messageType
-	default:
-		warnLogf("Client(%s): request invalid message type.", req.RemoteAddr)
-		return websocket.CloseMessage
-	}
+	infoLogf("Server start up :%s%s <<<", appConfig.PortStr, appConfig.Path)
 }
 
 func setServerHandlers(conn *websocket.Conn, req *http.Request) {
 	conn.SetPingHandler(func(recvMsg string) error {
-		infoLogf("Client(%s): request ping message \"%s\".", req.RemoteAddr, recvMsg)
+		t, _ := strMsgType[websocket.PingMessage]
+		infoLogf("%s > %s (%s)", req.RemoteAddr, recvMsg, t)
 		// reply same messsage from client.
 		return conn.WriteMessage(websocket.PongMessage, []byte(recvMsg))
 	})
 	conn.SetCloseHandler(func(code int, recvMsg string) error {
 		deleteConnectionFromClient(req.RemoteAddr)
-		infoLogf("Client(%s): request closing connection (code: %d). Message is \"%s\"", req.RemoteAddr, code, recvMsg)
+		infoLogf("%s > Close Code %d", req.RemoteAddr, code)
 		// reply same close code from client.
 		codeUint16 := uint16(code)
 		replyByte := []byte{byte(codeUint16 >> 8), byte(codeUint16)}
@@ -128,7 +112,7 @@ func setServerHandlers(conn *websocket.Conn, req *http.Request) {
 func closeServerConn(req *http.Request, conn *websocket.Conn) {
 	conn.Close()
 	deleteConnectionFromClient(req.RemoteAddr)
-	infoLogf("Connection closed on client(%s)", req.RemoteAddr)
+	infoLogf("Connection closed from %s", req.RemoteAddr)
 }
 
 // Connection from client list.

@@ -2,9 +2,18 @@ package main
 
 import (
 	"fmt"
+	"github.com/gorilla/websocket"
 	"net/http"
 	"strings"
 )
+
+var strMsgType = map[int]string{
+	websocket.TextMessage:   "Text",
+	websocket.BinaryMessage: "Binary",
+	websocket.PingMessage:   "Ping",
+	websocket.PongMessage:   "Pong",
+	websocket.CloseMessage:  "Close",
+}
 
 func getHeaderStr(h http.Header) string {
 	if h == nil {

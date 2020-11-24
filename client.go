@@ -15,6 +15,25 @@ import (
 
 var dialer = &websocket.Dialer{}
 
+type ClientClose struct {
+	mu  sync.RWMutex
+	Yes bool
+}
+
+func (c *ClientClose) close() {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.Yes = true
+}
+
+func (c *ClientClose) check() bool {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return c.Yes
+}
+
+var clientClose = &ClientClose{}
+
 // Entry point of client mode.
 func startClient() error {
 	var headers http.Header = nil
@@ -33,12 +52,11 @@ func startClient() error {
 	defer closeClientConn(conn)
 
 	// Set control message (Ping/Pong/Close) handler
-	clientController.setHandlers(conn, nil)
-	clientController.IsConnect = true
+	setClientHandlers(conn)
 
 	// Read text or binary message loop
 	// control messages are read by dedicated handlers
-	go readMessageFromServer(conn, clientController)
+	go readMessageFromServer(conn)
 
 	// if one-shot mode
 	if appConfig.IsOneShot {
@@ -56,9 +74,6 @@ func clientWebSocketLoop(conn *websocket.Conn) error {
 	// TODO: Supports special inputs such as arrow keys.
 	scanner := bufio.NewScanner(os.Stdin)
 	for scanner.Scan() {
-		if !clientController.isConnectWithServer() {
-			return clientController.Error
-		}
 		input := scanner.Text()
 
 		// Judge which wsnc command is called.
@@ -75,34 +90,7 @@ func clientWebSocketLoop(conn *websocket.Conn) error {
 		// Judge whether loop continue depneding on result of command.
 		isContinue, err := cmd(conn, arg)
 		if !isContinue {
-			return err
-		}
-		if err != nil {
-			rlogf(err.Error())
-			if cmdName == "e" || cmdName == "echo" {
-				prompt()
-				continue
-			}
-		}
-
-		// Some command don't require to await message, so "continue".
-		if cmdName == "t" || cmdName == "type" || cmdName == "h" || cmdName == "help" {
-			prompt()
-			continue
-		}
-
-		// Wait to recieve message from server.
-		for !clientController.checkMsgFromServer() {
-			time.Sleep(time.Millisecond * 50)
-		}
-
-		// print message for server depend on message types
-		if err != nil {
-			return err
-		}
-
-		err, brk := handleRecvMsg()
-		if brk {
+			clientClose.close()
 			return err
 		}
 		if err != nil {
@@ -114,45 +102,46 @@ func clientWebSocketLoop(conn *websocket.Conn) error {
 	return nil
 }
 
-func handleRecvMsg() (error, bool) {
-	clientController.mu.Lock()
-	defer clientController.mu.Unlock()
-	clientController.IsMessageRecv = false
-	switch clientController.MsgType {
-	case websocket.TextMessage, websocket.BinaryMessage:
-		msgFromSererf(clientController.Message)
-	case websocket.PingMessage:
-		msgFromSererf("Server replied ping message: %s", clientController.Message)
-	case websocket.PongMessage:
-		msgFromSererf("Server replied pong message: %s", clientController.Message)
-	case websocket.CloseMessage:
-		msgFromSererf("Server request closing connection (code:%d). Message is %s", clientController.Code, clientController.Message)
-		return clientController.Error, true
-	}
-	return clientController.Error, false
-}
-
-// Await message from server. This is called by goroutine and continuously run until the wsnc client end.
-func readMessageFromServer(conn *websocket.Conn, ctrl *ClientController) {
+func readMessageFromServer(conn *websocket.Conn) {
 	for {
 		mt, recvMsg, err := conn.ReadMessage()
-		if !ctrl.isConnectWithServer() {
+		if clientClose.check() {
+			// one-shot mode.
+			if appConfig.IsOneShot && err == nil {
+				fmt.Println(string(recvMsg))
+			}
 			return
 		}
 		if err != nil {
 			rlogf(err.Error())
-			if mt == -1 {
-				rlogf("\nRecieved Unexpected packet and connection may be discarded from server.")
-				ctrl.connectionClose()
-				return
-			}
 		}
-		if !ctrl.isAwaitMsg() {
-			msgFromSererf("%s", recvMsg)
-			continue
+		if mt == -1 {
+			rlogf("\nRecieved Unexpected packet and connection may be discarded from server.")
+			return
 		}
-		ctrl.setRecvMsgFromServer(mt, string(recvMsg), 0, err)
+		msgFromServer(mt, string(recvMsg), 0)
 	}
+}
+
+// hdls: 1. PingHandler 2. PongHandler
+func setClientHandlers(conn *websocket.Conn) {
+	conn.SetCloseHandler(func(code int, recvMsg string) error {
+		clientClose.close()
+		if !appConfig.IsOneShot {
+			msgFromServer(websocket.CloseMessage, recvMsg, code)
+		}
+		return nil
+	})
+
+	conn.SetPingHandler(func(recvMsg string) error {
+		msgFromServer(websocket.PingMessage, recvMsg, 0)
+		return nil
+	})
+
+	conn.SetPongHandler(func(recvMsg string) error {
+		msgFromServer(websocket.PongMessage, recvMsg, 0)
+		return nil
+	})
 }
 
 // Print prompt for wsnc client.
@@ -160,28 +149,29 @@ func prompt() {
 	fmt.Print(">> ")
 }
 
-func msgFromSererf(format string, param ...interface{}) (int, error) {
-	return fmt.Printf("< "+format+"\n", param...)
+func msgFromServer(mtype int, msg string, code int) {
+	if code != 0 {
+		fmt.Printf("\r< Close Code %d\n", code)
+		return
+	}
+	mtypeStr := strMsgType[mtype]
+	fmt.Printf("\r< %s (%s)\n", msg, mtypeStr)
 }
 
 // If client is running in one-shot mode, this function is called.
 func clientOneShot(conn *websocket.Conn) error {
-	clientController.startAwaitMessage()
 	err := conn.WriteMessage(websocket.TextMessage, []byte(appConfig.Message))
 	if err != nil {
 		return err
 	}
-	for !clientController.checkMsgFromServer() {
-		time.Sleep(time.Millisecond * 50)
-	}
-	conn.WriteMessage(websocket.CloseMessage, []byte{0x03, 0xe8})
-	clientController.connectionClose()
-	fmt.Println(clientController.Message)
-	return clientController.Error
+	return conn.WriteMessage(websocket.CloseMessage, []byte{0x03, 0xe8})
 }
 
 // When websocket connection loop is end, this function is always called.
 func closeClientConn(conn *websocket.Conn) {
+	clientClose.close()
+	// wait close message from server.
+	time.Sleep(time.Millisecond * 500)
 	conn.Close()
 	if !appConfig.IsOneShot {
 		rlogf("Closed connection.")
@@ -212,6 +202,7 @@ func wscCmdEcho(conn *websocket.Conn, arg string) (bool, error) {
 		return true, errors.New("Message is empty.")
 	}
 	if clientNowMessageType == websocket.CloseMessage {
+		clientClose.close()
 		code, err := strconv.Atoi(arg)
 		if err != nil {
 			e := conn.WriteMessage(clientNowMessageType, []byte(arg))
@@ -220,10 +211,8 @@ func wscCmdEcho(conn *websocket.Conn, arg string) (bool, error) {
 		codeUint16 := uint16(code)
 		bytes := []byte{byte(codeUint16 >> 8), byte(codeUint16)}
 		err = conn.WriteMessage(clientNowMessageType, bytes)
-		clientController.connectionClose()
 		return false, err
 	}
-	clientController.startAwaitMessage()
 	err := conn.WriteMessage(clientNowMessageType, []byte(arg))
 	return true, err
 }
@@ -231,14 +220,12 @@ func wscCmdEcho(conn *websocket.Conn, arg string) (bool, error) {
 // Command for sending ping of websocket.
 func wscCmdPing(conn *websocket.Conn, arg string) (bool, error) {
 	err := conn.WriteMessage(websocket.PingMessage, []byte(arg))
-	clientController.startAwaitMessage()
 	return true, err
 }
 
 // Command for close of websocket.
 func wscCmdClose(conn *websocket.Conn, arg string) (bool, error) {
 	rdebugf("Client select closing connection.")
-	clientController.connectionClose()
 	// send close code 1000
 	err := conn.WriteMessage(websocket.CloseMessage, []byte{0x03, 0xe8})
 	return false, err
@@ -280,109 +267,4 @@ func getWscCmdNameAndArg(input string) (string, string) {
 		return strings.Trim(args[0], " "), ""
 	}
 	return strings.Trim(args[0], " "), strings.Trim(args[1], " ")
-}
-
-// This is flag set for client mode and, have information on whether connection is enable
-// and whether client have recieved message from server, and recieved messsage and so on.
-type ClientController struct {
-	mu            sync.RWMutex
-	IsMessageRecv bool
-	IsConnect     bool
-	IsAwaitMsg    bool
-	MsgType       int
-	Code          int
-	Message       string
-	Error         error
-}
-
-var clientController = &ClientController{}
-
-// Notice that send message from client, and await reply message from server.
-func (c *ClientController) startAwaitMessage() {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-	c.IsAwaitMsg = true
-}
-
-// Check whether the client have recieved message from server.
-func (c *ClientController) checkMsgFromServer() bool {
-	if !c.isConnectWithServer() {
-		return true
-	}
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-	return c.IsMessageRecv
-}
-
-// When reciving message, handlers call this function.
-func (c *ClientController) setRecvMsgFromServer(mtype int, msg string, code int, err error) {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	if mtype == websocket.CloseMessage {
-		c.IsConnect = false
-	}
-	c.IsAwaitMsg = false
-	c.Code = code
-	c.Message = string(msg)
-	c.MsgType = mtype
-	c.Error = err
-	c.IsMessageRecv = true
-}
-
-// Check whether the connection with server is still enable.
-func (c *ClientController) isConnectWithServer() bool {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-	return c.IsConnect
-}
-
-func (c *ClientController) isAwaitMsg() bool {
-	c.mu.RLock()
-	defer c.mu.RUnlock()
-	return c.IsAwaitMsg
-}
-
-func (c *ClientController) connectionClose() {
-	c.mu.Lock()
-	defer c.mu.Unlock()
-	c.IsConnect = false
-}
-
-// hdls: 1. PingHandler 2. PongHandler
-func (c *ClientController) setHandlers(conn *websocket.Conn, closeHdl func(int, string) error, hdls ...func(string) error) {
-	conn.SetCloseHandler(func(code int, recvMsg string) error {
-		var err error
-		if closeHdl != nil {
-			err = closeHdl(code, recvMsg)
-		}
-		if !clientController.isAwaitMsg() {
-			msgFromSererf("< Server sent close code: %d", recvMsg, code)
-		}
-		c.setRecvMsgFromServer(websocket.CloseMessage, recvMsg, code, err)
-		return err
-	})
-
-	conn.SetPingHandler(func(recvMsg string) error {
-		var err error
-		if len(hdls) >= 1 {
-			err = hdls[0](recvMsg)
-		}
-		if !clientController.isAwaitMsg() {
-			msgFromSererf("< Server sent ping message: %d", recvMsg)
-		}
-		c.setRecvMsgFromServer(websocket.PingMessage, recvMsg, 0, err)
-		return err
-	})
-
-	conn.SetPongHandler(func(recvMsg string) error {
-		var err error
-		if len(hdls) >= 2 {
-			err = hdls[1](recvMsg)
-		}
-		if !clientController.isAwaitMsg() {
-			msgFromSererf("< Server sent pong message: %d", recvMsg)
-		}
-		c.setRecvMsgFromServer(websocket.PongMessage, recvMsg, 0, err)
-		return err
-	})
 }
