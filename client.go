@@ -15,7 +15,7 @@ import (
 
 var (
 	dialer      = &websocket.Dialer{}
-	clientClose = &ClientClose{}
+	clientClose *ClientClose
 )
 
 // To check whether client connection is closed.
@@ -38,6 +38,7 @@ func (c *ClientClose) check() bool {
 
 // Entry point of client mode.
 func startClient() error {
+	clientClose = &ClientClose{}
 	var headers http.Header = nil
 	var err error
 	if appConfig.Headers != nil {

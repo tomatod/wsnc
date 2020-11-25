@@ -35,6 +35,7 @@ func initStdio(stdin *os.File, stdout *os.File, stderr *os.File) {
 
 func TestServerSimpleStartUp(t *testing.T) {
 	// server config
+	clientClose = &ClientClose{}
 	appConfig = Config{}
 	appConfig.IsServer = true
 	appConfig.Path = "/"
@@ -99,6 +100,7 @@ func TestServerSimpleStartUp(t *testing.T) {
 
 func TestServerStaticMsgMode(t *testing.T) {
 	// server config
+	clientClose = &ClientClose{}
 	appConfig = Config{}
 	appConfig.IsServer = true
 	appConfig.Path = "/path/"

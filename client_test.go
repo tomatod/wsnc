@@ -56,13 +56,13 @@ func testHandler(w http.ResponseWriter, r *http.Request) {
 }
 
 func clietnTestInit() {
-
 	wsMsgTest.mtype = 0
 	wsMsgTest.msg = ""
 	wsMsgTest.code = 0
 	wsMsgTest.err = nil
 	appConfig = Config{}
 	appConfig.Path = "/"
+	clientNowMessageType = websocket.TextMessage
 }
 
 func TestTextMsg(t *testing.T) {
@@ -74,7 +74,6 @@ func TestTextMsg(t *testing.T) {
 	appConfig.Url = httpToWs(testServer.URL) + appConfig.Path
 
 	// input to STDIN
-	clientNowMessageType = websocket.TextMessage
 	r1, w1, _ := os.Pipe()
 	stdin := os.Stdin
 	os.Stdin = r1
@@ -112,7 +111,6 @@ func TestBinaryMsg(t *testing.T) {
 	appConfig.Url = httpToWs(testServer.URL) + appConfig.Path
 
 	// input to STDIN
-	clientNowMessageType = websocket.TextMessage
 	r1, w1, _ := os.Pipe()
 	stdin := os.Stdin
 	os.Stdin = r1
@@ -150,7 +148,6 @@ func TestPingMsg(t *testing.T) {
 	appConfig.Url = httpToWs(testServer.URL) + appConfig.Path
 
 	// input to STDIN
-	clientNowMessageType = websocket.TextMessage
 	r1, w1, _ := os.Pipe()
 	stdin := os.Stdin
 	os.Stdin = r1
@@ -188,7 +185,6 @@ func TestCloseMsg(t *testing.T) {
 	appConfig.Url = httpToWs(testServer.URL) + appConfig.Path
 
 	// input to STDIN
-	clientNowMessageType = websocket.TextMessage
 	r1, w1, _ := os.Pipe()
 	stdin := os.Stdin
 	os.Stdin = r1
@@ -226,7 +222,6 @@ func TestSpecifiedCloseMsg(t *testing.T) {
 	appConfig.Url = httpToWs(testServer.URL) + appConfig.Path
 
 	// input to STDIN
-	clientNowMessageType = websocket.TextMessage
 	r1, w1, _ := os.Pipe()
 	stdin := os.Stdin
 	os.Stdin = r1
