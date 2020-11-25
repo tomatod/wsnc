@@ -48,6 +48,9 @@ COMMANDS:
    help, h  Display command help.
    
 # example ( ">>" はクライアント側 (入力側), "<" はサーバーからの応答)
+## reply format
+< hello (Text)   <==== "hello" はメッセージ、 "Text" はメッセージタイプとなります。
+
 ## text メッセージを送信する
 >> e hello
 < hello (Text)
