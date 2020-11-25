@@ -50,24 +50,34 @@ COMMANDS:
    help, h  Display command help.
    
 # example
-## send text message "hoge"
->> e "hoge"
+## send text message
+>> e hello
+< hello (Text)
 
-## send binary message "bar"
+## send ping message (reply is pong message)
+>> p boooon
+< boooon (Pong)
+
+## send binary message
 >> t binary
->> e bar
+>> e wsnc
+< wsnc (Binary)
 
-## send close message and quit
+## send close message
 >> q
+< Close Code 1000
 
-## send ping message "ping"
->> p "ping"
-
-## send specify close code (example is 1011) and quit
+## send specify close code (example is 1011)
 >> t close
 >> e 1011
+< Close Code 1011
 ```
-Note: Close code is the following   
+Note: 
+- Message type is the following
+https://tools.ietf.org/html/rfc6455#section-5.6
+https://tools.ietf.org/html/rfc6455#section-5.5
+
+- Close code is the following   
 https://tools.ietf.org/html/rfc6455#section-7.4.1
 
 
