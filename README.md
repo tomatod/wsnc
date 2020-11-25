@@ -52,6 +52,7 @@ COMMANDS:
 # example ( ">>" is by client, "<" is from server)
 ## reply format
 < hello (Text)   <==== "hello" is message, "Text" is message type.
+
 ## send text message
 >> e hello
 < hello (Text)
