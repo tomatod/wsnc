@@ -73,9 +73,9 @@ COMMANDS:
 < Close Code 1011
 ```
 Note: 
-- Message type is the following
-https://tools.ietf.org/html/rfc6455#section-5.6
-https://tools.ietf.org/html/rfc6455#section-5.5
+- Message type is the following   
+https://tools.ietf.org/html/rfc6455#section-5.6   
+https://tools.ietf.org/html/rfc6455#section-5.5   
 
 - Close code is the following   
 https://tools.ietf.org/html/rfc6455#section-7.4.1
