@@ -47,25 +47,34 @@ COMMANDS:
    type, t  Change echo message type (text|binary|ping|close).
    help, h  Display command help.
    
-# 例
-## "hoge" という text メッセージを送信します。
->> e "hoge"
+# example ( ">>" はクライアント側 (入力側), "<" はサーバーからの応答)
+## text メッセージを送信する
+>> e hello
+< hello (Text)
 
-## "bar" という binary メッセージを送信します。
+## ping メッセージを送信する
+>> p boooon
+< boooon (Pong)
+
+## binary メッセージを送信する
 >> t binary
->> e bar
+>> e wsnc
+< wsnc (Binary)
 
-## close メッセージを送信ししてコマンドを終了します。
+## close メッセージを送信する
 >> q
+< Close Code 1000
 
-## "ping" という文字列で、ping メッセージを送信します。
->> p "ping"
-
-## 特定の close code (example is 1011) を close メッセージで送信して、コマンドを終了します。
+## 特定の close code で close メッセージを送信する
 >> t close
 >> e 1011
+< Close Code 1011
 ```
-※ close code は以下参照   
+Message タイプ (text / binary 等) は以下を参照
+https://tools.ietf.org/html/rfc6455#section-5.6
+https://tools.ietf.org/html/rfc6455#section-5.5
+
+Close コード (1000 / 1011 等) は以下を参照
 https://tools.ietf.org/html/rfc6455#section-7.4.1
 
 # オプション
