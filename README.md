@@ -49,7 +49,7 @@ COMMANDS:
    type, t  Change echo message type (text|binary|ping|close).
    help, h  Display command help.
    
-# example
+# example ( ">>" is by client, "<" is from server)
 ## send text message
 >> e hello
 < hello (Text)
