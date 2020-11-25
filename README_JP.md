@@ -70,12 +70,13 @@ COMMANDS:
 >> e 1011
 < Close Code 1011
 ```
-Message タイプ (text / binary 等) は以下を参照
-https://tools.ietf.org/html/rfc6455#section-5.6
-https://tools.ietf.org/html/rfc6455#section-5.5
+備考:
+- Message タイプ (text / binary 等) は以下を参照   
+https://tools.ietf.org/html/rfc6455#section-5.6   
+https://tools.ietf.org/html/rfc6455#section-5.5   
 
-Close コード (1000 / 1011 等) は以下を参照
-https://tools.ietf.org/html/rfc6455#section-7.4.1
+- Close コード (1000 / 1011 等) は以下を参照
+https://tools.ietf.org/html/rfc6455#section-7.4.1   
 
 # オプション
 ```
